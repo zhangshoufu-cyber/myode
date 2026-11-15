@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>山河赴远：从旅行社报表，看后疫情时代国人的出行选择</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts/map/js/china.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{
+  font-family:"Microsoft Yahei",sans-serif;
+  color:#222;
+  overflow-x:hidden;
+}
+/* 封面层 */
+.cover{
+  position:fixed;
+  inset:0;
+  z-index:99;
+  transition:transform 1.6s cubic-bezier(0.22, 0, 0.35, 1);
+}
+.cover-img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+.start-btn{
+  position:absolute;
+  bottom:14%;
+  left:50%;
+  transform:translateX(-50%);
+  padding:12px 32px;
+  font-size:16px;
+  color:#fff;
+  background:rgba(0,0,0,0.35);
+  border:1px solid rgba(255,255,255,0.65);
+  border-radius:999px;
+  cursor:pointer;
+  backdrop-filter:blur(6px);
+}
+.cover.move-away{
+  transform:translateY(-100vh);
+  pointer-events:none;
+}
+/* 固定底图层 */
+.bg-fixed-wrap{
+  position:fixed;
+  inset:0;
+  z-index:-1;
+}
+.bg-fixed-item{
+  position:absolute;
+  inset:0;
+  width:100vw;
+  height:100vh;
+  object-fit:cover;
+  opacity:0;
+  transition:opacity 1s ease;
+}
+.bg-fixed-item.active{
+  opacity:1;
+}
+/* 上层滚动内容容器 */
+.scroll-content{
+  position:relative;
+  z-index:1;
+}
+/* 透明悬浮标题区 */
+.transparent-title{
+  width:100vw;
+  padding:40px 12px 32px;
+  position:relative;
+}
+.title-inner{
+  max-width:1050px;
+  margin:0 auto;
+  opacity:0;
+  transform:translateY(24px);
+  transition:opacity 0.7s ease, transform 0.7s ease;
+}
+.title-inner.show{
+  opacity:1;
+  transform:translateY(0);
+}
+.title-inner h2{
+  font-size:clamp(24px,5vw,42px);
+  line-height:1.45;
+  color:#fff;
+  text-shadow:0 3px 16px rgba(0,0,0,0.65);
+  text-align:center;
+}
+.title-inner h2 + h2{
+  font-size:clamp(20px,4vw,36px);
+}
+/* 透明正文段落 */
+.transparent-box{
+  width:100vw;
+  padding:32px 12px 36px;
+  position:relative;
+}
+.transparent-inner{
+  max-width:1050px;
+  margin:0 auto;
+  opacity:0;
+  transform:translateY(28px);
+  transition:opacity 0.7s ease, transform 0.7s ease;
+}
+.transparent-inner.show{
+  opacity:1;
+  transform:translateY(0);
+}
+.transparent-inner p{
+  line-height:1.8;
+  font-size:clamp(15px,3vw,17px);
+  color:#fff;
+  text-shadow:0 2px 12px rgba(0,0,0,0.6);
+  margin-bottom:14px;
+}
+.transparent-inner p:last-child{
+  margin-bottom:0;
+}
+/* 实心白色正文框 */
+.white-box{
+  width:100vw;
+  background:#ffffff !important;
+  padding:32px 12px 36px;
+  position:relative;
+}
+.white-inner{
+  max-width:1050px;
+  margin:0 auto;
+  opacity:0;
+  transform:translateY(28px);
+  transition:opacity 0.7s ease, transform 0.7s ease;
+}
+.white-inner.show{
+  opacity:1;
+  transform:translateY(0);
+}
+.white-inner p{
+  line-height:1.8;
+  font-size:clamp(15px,3vw,17px);
+  margin-bottom:14px;
+}
+.white-inner p:last-child{
+  margin-bottom:0;
+}
+/* 小号说明文字 */
+.caption-small{
+  font-size:14px;
+  color:#555;
+  line-height:1.6;
+  margin-top:8px;
+}
+.caption-tiny{
+  font-size:12px;
+  color:#666;
+  line-height:1.6;
+  margin-top:8px;
+}
+/* ECharts容器 */
+.chart-map-wrap{
+  width:100%;
+  padding:12px 0;
+  margin:20px 0 6px;
+}
+.map-two-col{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  width:100%;
+  height:auto;
+}
+#mapLeft{
+  width:100%;
+  height:320px;
+  background:transparent;
+}
+#mapRight{
+  width:100%;
+  height:320px;
+  background:transparent;
+}
+/* 【新增：hover带图片的地图容器】 */
+#mapPhotoChart{
+  width:100%;
+  height:360px;
+  background:transparent;
+}
+.note{
+  margin-top:12px;
+  font-size:13px;
+  line-height:1.6;
+  color:#222;
+  background:rgba(255,255,255,0.5);
+  padding:10px 12px;
+  border-radius:6px;
+}
+.ring-chart-wrap{
+  width:100%;
+  padding:12px 0;
+  margin:20px 0 6px;
+}
+#ringChart{
+  width:100%;
+  height:360px;
+  background:transparent;
+}
+.bar-chart-wrap{
+  width:100%;
+  padding:12px 0;
+  margin:20px 0 6px;
+}
+#barChart{
+  width:100%;
+  height:420px;
+  background:transparent;
+}
+.chart-title{
+  text-align:center;
+  font-size:17px;
+  font-weight:600;
+  color:#222;
+  margin-bottom:4px
+}
+.chart-subtitle{
+  text-align:center;
+  font-size:12px;
+  color:#444;
+  margin-bottom:12px
+}
+.center-text{
+  text-align:center;
+}
+/* tooltip内图片样式，限制图片大小，防止弹窗撑太大 */
+.tooltip-img{
+  max-width:180px;
+  max-height:130px;
+  border-radius:4px;
+  margin-top:6px;
+}
+/* ========== 3D倾斜轮播样式【新增】 ========== */
+.carousel-wrap{
+  width:100%;
+  max-width:1050px;
+  margin:24px auto 30px;
+  position:relative;
+  overflow:hidden;
+  padding:12px 0;
+}
+.carousel-track{
+  display:flex;
+  align-items:center;
+  transition: transform 0.4s ease-out;
+  cursor:grab;
+}
+.carousel-track:active{
+  cursor:grabbing;
+}
+.carousel-item{
+  flex-shrink:0;
+  width:75%;
+  padding:0 8px;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+}
+.carousel-item img{
+  width:100%;
+  height:260px;
+  object-fit:cover;
+  border-radius:10px;
+  box-shadow:0 6px 20px rgba(0,0,0,0.22);
+  display:block;
+}
+.carousel-dot-wrap{
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  margin-top:16px;
+}
+.carousel-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#ccc;
+  transition:all 0.3s;
+}
+.carousel-dot.active{
+  background:#222;
+  width:18px;
+  border-radius:5px;
+}
+.carousel-note{
+  text-align:center;
+  font-size:13px;
+  color:#555;
+  margin-top:10px;
+  line-height:1.6;
+}
+@media screen and (min-width:768px){
+  .map-two-col{
+    flex-direction:row;
+    height:520px;
+  }
+  #mapLeft,#mapRight{
+    height:100%;
+  }
+  #mapPhotoChart{height:560px;}
+  #ringChart{height:520px;}
+  #barChart{height:620px;}
+  .carousel-item{width:62%;}
+  .carousel-item img{height:420px;}
+  .start-btn{padding:16px 44px;font-size:20px;}
+}
+@media (max-width:768px) {
+  .cover {
+    position: fixed;
+    inset:0;
+    width:100vw;
+    height:100vh;
+  }
+  .start-btn {
+    font-size:14px;
+    padding:10px 26px;
+    bottom:10%;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="cover" id="cover">
+  <img class="cover-img" src="./images/bg_01.jpg" alt="封面">
+  <button class="start-btn" id="startBtn">Start</button>
+</div>
+
+<div class="bg-fixed-wrap" id="bgWrap">
+  <img class="bg-fixed-item active" data-id="bg01" src="./images/bg_01.jpg" alt="bg01">
+  <img class="bg-fixed-item" data-id="bg02" src="./images/bg_02.jpg" alt="bg02">
+  <img class="bg-fixed-item" data-id="bg03" src="./images/bg_03.jpg" alt="bg03">
+  <img class="bg-fixed-item" data-id="bg04" src="./images/bg_04.jpg" alt="bg04">
+  <img class="bg-fixed-item" data-id="bg05" src="./images/bg_05.jpg" alt="bg05">
+  <img class="bg-fixed-item" data-id="bus" src="./images/img_bus.jpg" alt="bus">
+  <img class="bg-fixed-item" data-id="spywar" src="./images/img_spywar.jpg" alt="spywar">
+  <img class="bg-fixed-item" data-id="bg06" src="./images/bg_06.jpg" alt="bg06">
+</div>
+
+<div class="scroll-content" id="scrollContent">
+  <!-- 开篇主标题：两行、居中 -->
+  <section class="transparent-title" data-bg="bg01">
+    <div class="title-inner">
+      <h2>山河赴远：</h2>
+      <h2 style="font-size:36px;">从旅行社报表，看后疫情时代国人的出行选择</h2>
+        </div>
+  </section>
+
+  <!-- 导语白色框 bg01，切换点到bg02 -->
+ <section class="white-box" id="introBox" data-bg="bg01" data-switch-next="bg02">
+    <div class="white-inner">
+      <p class="center-text"><strong>导语</strong></p>
+      <p class="center-text"><span style="font-weight:bold;color:#0033cc">临近假期，你要去哪儿玩？</span></p>
+      <p class="center-text">有人报个团，往远方山水走一走；</p>
+      <p class="center-text">有人订张车票，奔着网上刷屏的小城去，谁也不拦谁。</p>
+      <p class="center-text">短视频里看的是热度，</p>
+      <p class="center-text"><span style="font-weight:bold;color:#0033cc">文旅部的报表记的却是另一件事 —— 旅行社的大巴究竟开去了哪里，停在了哪个省。</span></p>
+    </div>
+  </section>
+
+
+  <!-- 一、旧时光：跟团游，一代人的远行起点 透明标题 bg02【居中】 -->
+  <section class="transparent-title" data-bg="bg02">
+    <div class="title-inner">
+      <h2>一、旧时光：跟团游，一代人的远行起点</h2>
+    </div>
+  </section>
+
+  <section class="white-box" data-bg="bg02" data-switch-next="bus">
+    <div class="white-inner">
+      <p><span style="font-weight:bold;color:#0033cc">三十多年前，普通中国人出一趟远门，不是一件容易事。</span></p>
+    </div>
+  </section>
+
+
+  <!-- 80/90年代透明正文段，底图bus -->
+  <section class="transparent-box" data-bg="bus">
+    <div class="transparent-inner">
+      <p>上世纪 80 年代，旅行社更多承担外事接待职能，普通老百姓很少有机会参团出游。到 90 年代，双休制度落地，黄金周慢慢成型，国内大众旅游才真正兴起。那时候，多数人没有条件自己订车票、找住宿，想要奔赴远方，多半要依靠旅行社。一张印着目的地名字的旅游合同，就是普通人走向山川大海的入场券。不少人的第一次坐飞机、第一次住宾馆，就是跟着旅行团完成的。</p>
+      <p>父辈的记忆里，旅游常常是这样：跟着大巴车，沿着既定线路，走访名山大川，在标志性景点拍下一张合影。那时候的旅行，讲究稳妥、省心，旅行社串联起交通、住宿、景区资源，把遥远的远方，变成普通人触手可及的选择。也不是想去就能去，单位组团、街坊结伴，凑够一车人才出发。</p>
+    </div>
+  </section>
+
+  <!-- 互联网兴起与疫情后白框，切换点bg03 -->
+  <section class="white-box" data-bg="bus" data-switch-next="bg03">
+    <div class="white-inner">
+      <p>后来互联网兴起，自由行慢慢流行。年轻人习惯自己做攻略，订票订酒店，“特种兵旅游” 走红网络。但这并不代表跟团游就此消失。过去十年，高铁越修越密，手机一点就能订票、找房、看攻略，出门这件事的门槛低了很多。可门槛低了，麻烦也跟着来：长假景点人挤人，热门线路一票难求，路上还要堵上几个钟头，不少人又想起旅行社的好，不用自己操心，出了事有人对接。<span style="font-weight:bold;color:#0033cc">对于家庭群体、中老年游客，以及路途遥远、景点分散的长线行程，旅行社依旧承担着不可替代的作用。</span></p>
+      <p>疫情三年，跨省团队游基本停摆。那几年，出门一趟都要反复掂量，能跨省走一回，对不少人已经是件大事。导游转行，门店关张，是那几年行业里常有的事。等到放开，许多老线路重新挂出来卖，接团的还是那批人。<span style="font-weight:bold;color:#0033cc">2023 年市场全面复苏，被压抑许久的远行需求集中释放，旅行社行业重新回到大众视野。</span>我们拿到的这一组季度、年度报表，正是复苏之后，团队旅游市场留下的真实脚印。</p>
+<!-- ========== 3D倾斜轮播【插入在这里】 ========== -->
+<div class="carousel-wrap" id="carousel">
+  <div class="carousel-track" id="track">
+    <div class="carousel-item">
+      <img src="./images/img_modern_fish_lantern.jpg" alt="鱼灯">
+    </div>
+    <div class="carousel-item">
+      <img src="./images/img_old_beijing_station.jpg" alt="北京站老照片">
+    </div>
+    <div class="carousel-item">
+      <img src="./images/img_old_bund_tourist.jpg" alt="外滩老照片">
+    </div>
+    <div class="carousel-item">
+      <img src="./images/img_old_nanjing_road1.jpg" alt="南京路老照片1">
+    </div>
+    <div class="carousel-item">
+      <img src="./images/img_old_nanjing_road2.jpg" alt="南京路老照片2">
+    </div>
+  </div>
+  <!-- 底部圆点进度条 -->
+  <div class="carousel-dot-wrap" id="dotWrap"></div>
+  <div class="carousel-note">
+    图注：国内旅游发展不同时期实拍影像，记录大众出行方式变迁
+  </div>
+</div>
+    </div>
+  </section>
+
+  <!-- 二、复苏之后：读懂报表背后的前因【居中】 -->
+  <section class="transparent-title" data-bg="bg03">
+    <div class="title-inner">
+      <h2>二、复苏之后：读懂报表背后的前因</h2>
+    </div>
+  </section>
+
+  <section class="white-box" data-bg="bg03" data-switch-next="bg04">
+    <div class="white-inner">
+      <p>为什么疫情结束之后，团队游会呈现如今这样一副模样？这并不单单是 “大家想出去玩” 这么简单。</p>
+    </div>
+  </section>
+
+  <!-- 出游意愿透明正文 bg04 -->
+  <section class="transparent-box" data-bg="bg04">
+    <div class="transparent-inner">
+      <p>首先是积攒已久的出游意愿。几年间很多人的远行计划被搁置，当跨省团队游重新放开，很多人第一件事，便是想要去看一看久未谋面的山河。尤其是距离遥远的西南、西北，从前碍于路途折腾，不少人愿意交给旅行社，打包完成一次长途旅行。</p>
+      <p>其次是出行人群与需求的分化。年轻人偏爱自由行，追求随性、小众、网红打卡；而不少家庭、中老年群体，更看重稳妥，不愿在路途、住宿上耗费心力。两类需求，走向两条不同的赛道。于是就出现一种很有意思的现象：网上爆火的地方，未必旅行团云集；旅行团扎堆的省份，社交媒体的声音却未必喧嚣。</p>
+    </div>
+  </section>
+
+  <!-- 产业底子白框 +【图表1 ECharts双热力地图】，切换点bg05 -->
+  <section class="white-box" data-bg="bg04" data-switch-next="bg05">
+    <div class="white-inner">
+      <p><span style="font-weight:bold;color:#0033cc">产业底子也决定着客流走向。</span>东部省份经过几十年发展，酒店、导游、地接配套完备，既能接待源源不断的外来游客，本省居民也有足够的消费能力向外出游。景区密集，高铁成网，一个周末就能串起好几座城市，本省人的短途团自己就能消化掉一大半。数字好看的背后，是几十年攒下来的家底。而西部省份，则依托得天独厚的自然风光，把大环线线路打磨成熟，成为长线团队游的主要目的地。一条环线动辄几百公里，自己开车累，转车更累，交给旅行社反倒省事。</p>
+      <p>还要客观看待这份数据本身的局限：<span style="font-weight:bold;color:#0033cc">它只记录旅行社经手的游客，不代表全部旅游市场。</span>一个地方网上热度高，有可能绝大多数是散客自驾，在这份报表上体现不出热闹。还有些地方接待量不高，是因为本地旅行社规模小、线路少，接不住大团，并不等于没人愿意来。旺季一过，接待量掉得很快，全年摊开来看，数字自然不那么齐整。我们不能拿着这一组数字，直接判定一座城市或者一个省份旅游的好坏。</p>
+
+      <!-- 新版透明背景ECharts图表1 -->
+      <div class="chart-map-wrap">
+        <div class="map-two-col">
+          <div id="mapLeft"></div>
+          <div id="mapRight"></div>
+        </div>
+        <div class="note">
+          <strong>图注：</strong><br>
+          数据来源：文化和旅游部数据服务平台，总入口：https://sjfw.mct.gov.cn/site/dataservice/home，《全国旅行社组织接待国内旅游统计表》（含年度、季度快速调查表）；<br>
+          统计口径：仅统计经由旅行社渠道组织、接待的国内游客人次数，自驾、自由行散客不在统计样本内；<br>
+          时间范围：左图2023全年；右图2024年1-9月（2024为一、二、三季度累加）；公开渠道暂未获取2023年第三季度调查表，未纳入分析；<br>
+          注意：2024前三季度为9个月累计，不直接和2023全年做绝对数值对比，分析重点为各省份位次、份额占比变化。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 三、两种格局：客源地与目的地，并不总是重合【居中】 -->
+  <section class="transparent-title" data-bg="bg05">
+    <div class="title-inner">
+      <h2>三、两种格局：客源地与目的地，并不总是重合</h2>
+    </div>
+  </section>
+
+  <!-- 第一段格局白框 + 图2 双层环形饼图 -->
+  <section class="white-box" data-bg="bg05">
+    <div class="white-inner">
+      <p>翻看一整年、数个季度的数据，两条清晰的格局慢慢浮现出来。</p>
+      <p>第一，东部守住基本盘，西部吃掉长线增量。江苏、浙江、广东、山东这些东部省份，人口稠密，经济基础好，文旅服务业经过长年打磨，无论 2023 还是 2024 年前三季度，旅行社接待的绝对规模始终处在第一梯队。它们更多承接周边短途、商务附带出游，客源源源不断。</p>
+      <p>而新增长的跨省长途团队，大量流向西南与西北。云南、四川、陕西、甘肃等地，大环线产品成熟，适合 7‑10 天的长途跟团。春夏秋三季，草原、花海、彩林轮番登场，再加上旅游专列这类旅行社主导的产品加持，源源不断的外地团队游客奔赴而来。</p>
+      <p><span style="font-weight:bold;color:#0033cc">这两套模式互不冲突：东部做近程，稳住大盘；西部做远方，吃下长线新增的客流。</span></p>
+
+      <!-- 图2：TOP15双层环形饼图 -->
+      <div class="ring-chart-wrap">
+        <div class="chart-title">TOP15省份接待人次份额对比</div>
+        <div class="chart-subtitle">内环：2023全年｜外环：2024前三季度</div>
+        <div id="ringChart"></div>
+        <div class="note">
+          图注：数据来源：文化和旅游部数据服务平台《全国旅行社组织接待国内旅游统计表》；统计口径：仅统计经由旅行社渠道组织、接待的国内游客人次数；时间范围：2023全年、2024年1‑9月；2024前三季度为9个月累计，不直接和2023全年做绝对数值对比，分析重点为各省份位次、份额占比变化。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 第二透明正文 -->
+  <section class="transparent-box" data-bg="bg05">
+    <div class="transparent-inner">
+      <p>第二，“向外送人” 和 “迎接来客”，往往不是同一批省份。报表里面有两个很关键的数字：组织人次，代表本省居民报名参团外出旅游；接待人次，代表外省团队游客来到本省游玩。</p>
+      <p>江浙粤鲁这类省份，两项数字双双走高。本地人愿意花钱报团去往别处，同时外地游客也源源不断过来，既是 “游客制造机”，也是热门旅游目的地，双向的人员流动十分活跃。</p>
+    </div>
+  </section>
+
+  <!-- 西部省份与网红热度白框 + 图3双向发散条形图，切换点spywar -->
+  <section class="white-box" data-bg="bg05" data-switch-next="spywar">
+    <div class="white-inner">
+      <p>而不少西部省份，接待人次很高，组织人次却相对有限。通俗来讲，全国各地的游客都跑来此地观光，但本省居民参团向外出游的规模不算大，是纯粹的 “目的地”。一是本地人口本就不多，二是不少人常年在外务工，一年到头未必有闲报团。也有少数省份，本地人爱报团出去旅游，但吸引外来团队游客的能力偏弱，线路卖得出去，客人却进不来，这是另一回事。</p>
+
+      <!-- 图3：双向发散条形图 -->
+      <div class="bar-chart-wrap">
+        <div class="chart-title">各省份旅行社组织、接待人次对比</div>
+        <div class="chart-subtitle">2024年前三季度1-9月累计｜向左：组织人次(淡蓝)｜向右：接待人次(天空蓝)｜中间0分割线</div>
+        <div id="barChart"></div>
+        <div class="note">
+          图注：数据来源：文化和旅游部数据服务平台，总入口：https://sjfw.mct.gov.cn/site/dataservice/home，《全国旅行社组织接待国内旅游统计表》；
+          统计口径：仅统计经由旅行社渠道组织、接待的国内游客人次数；
+          时间范围：2024 年 1-9 月（一、二、三季度累加）。
+        </div>
+      </div>
+
+      <p><span style="font-weight:bold;color:#0033cc">还有一个值得留意的错位：网红热度，不等于旅行社地接热度。</span>有些地方在短视频刷屏，年轻人蜂拥而至，但几乎没有成熟的大团队线路，来的大多是自助游客。一个梗、一段视频、一处景，热度来得快，退得也快，留下来的多是本地人的周末散步。它在互联网上是现象级 IP，可在旅行社的统计表里，排名并不靠前。旅行社卖的却是一年一年挂出来的线路，靠的是交通、住宿、地接这一整条链子，慢，但稳。热度是一阵风，线路是一条路，前者来得容易，后者修得慢。<span style="font-weight:bold;color:#0033cc">网红流量赛道，和团队游赛道，是两套不一样的游戏。</span></p>
+
+    </div>
+  </section>
+
+  <!-- 四、旅行流动带来了什么：底图改为 img_spywar.jpg -->
+  <section class="transparent-title" data-bg="spywar">
+    <div class="title-inner">
+      <h2>四、旅行流动带来了什么：数据背后的现实回响</h2>
+    </div>
+  </section>
+
+  <!-- 四、正文白色框 -->
+  <section class="white-box" data-bg="spywar" data-switch-next="bg06">
+    <div class="white-inner">
+      <p><span style="font-weight:bold;color:#0033cc">游客的流动，最终会落到土地之上，化作实实在在的经济与社会变化。</span></p>
+      <p>大批团队游客到来，直接带动当地住宿、餐饮、交通、景区的消费。旅行团大巴开进小城、县城，带来客流，也带来就业机会，导游、酒店服务、本地土特产售卖，都跟着受益。这也是长线目的地十分看重团队市场的缘由。</p>
+      <p>但团队游火爆，并不等于万事大吉。如果只是走马观花的观光，游客匆匆来过又离开，消费只停留在门票、快餐，很难真正带动地方更深层次的发展。只有当线路设计结合本地风土，带动深度体验，旅游的价值才会更多留在当地。</p>
+      <p>这份数据，也折射出当代中国人的一种精神变化。如今旅游早已不是少数人的特权，成为普通人调节生活的一种方式。人们愿意跨越千里，不只是为了打卡风景，也是为了换一种心境。<p><span style="font-weight:bold;color:#0033cc">一部分人偏爱自由自在的独行，一部分人选择交给旅行社换取安稳。两种选择没有高下，只是不同人群对旅行的不同理解。</span></p>
+      <p>我们也要记得这份统计的短板：它看不见千万个自驾、特种兵出游的年轻人。所以我们解读数字的时候，要克制下结论的冲动。报表只能给我们看团队游这一个切面，完整的中国旅游图景，需要把散客、自由行一并纳入，才能看得周全。</p>
+
+      <!-- =========【新增悬浮带照片的地图，插在这一段文字下面】========= -->
+      <div class="chart-map-wrap">
+        <div class="chart-title">各省份旅游风貌示意</div>
+        <div id="mapPhotoChart"></div>
+        <div class="note">
+          图注：地图仅用于示意各省份地域；弹窗展示该省份代表风光实拍图片；旅游统计数据为2024年前三季度旅行社接待人次。<br>
+        </div>
+      </div>
+      
+    </div>
+  </section>
+
+  <!-- 尾声：透明框，底图bg_06.jpg -->
+  <section class="transparent-title" data-bg="bg06">
+    <div class="title-inner">
+      <h2>尾声</h2>
+    </div>
+  </section>
+
+  <!-- 尾声正文保持白色底 -->
+  <section class="white-box" data-bg="bg06">
+    <div class="white-inner">
+           <p><span style="font-weight:bold;color:#0033cc">时代往前走，旅游的方式一直在变。</span></p>
+      <p>从八九十年代难得一次的跟团远行，到今天自由行、定制游百花齐放。短视频制造一轮又一轮网红热点，而旅行社依旧守着属于它的那一部分市场。</p>
+      <p>打开这一张张季度、年度报表，我们看见的不只是一行行人次数字，更是千千万万个普通人：有人跟着大巴奔赴遥远的西部山河，有人在家乡接待远道而来的客人，也有人收拾行囊，从自己的省份出发，去往别处。</p>
+      <p><span style="font-weight:bold;color:#0033cc">山河向何处，答案藏在每一个普通人的出行选择里。报表记下的，只是其中的一部分。</span></p>
+     <p style="font-size:13px;color:#555;line-height:1.6;margin-top:40px;text-align:left;">
+说明：公开渠道暂未检索到2023 年第三季度的对应快速调查表，本文分析不使用该季度数据；用到的数据包含：2023 年第一、二、四季度、2023 全年；2024 年第一、二、三季度，全部取自文化和旅游部数据服务平台。<br>
+本文为《数据可视化与数据新闻》课程作品。AI 使用说明：本文使用 AI 辅助梳理叙事框架，全部原始数据、分析判断来自文化和旅游部公开原始报表，经过人工核对校验。
+</p>
+
+    </div>
+  </section>
+</div>
+
+<script>
+const cover = document.getElementById('cover');
+const startBtn = document.getElementById('startBtn');
+const introBox = document.getElementById('introBox');
+const bgWrap = document.getElementById('bgWrap');
+const bgItems = document.querySelectorAll('.bg-fixed-item');
+const sections = document.querySelectorAll('section');
+const animItems = document.querySelectorAll('.title-inner,.white-inner,.transparent-inner');
+
+startBtn.addEventListener('click', () => {
+  cover.classList.add('move-away');
+  setTimeout(() => {
+    cover.style.display = 'none';
+  }, 1600);
+
+  if (introBox) {
+    introBox.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
+  }
+});
+
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('show');
+    } else {
+      e.target.classList.remove('show');
+    }
+  });
+}, {
+  threshold: 0,
+  rootMargin: '0px 0px -10% 0px'
+});
+
+animItems.forEach(el => io.observe(el));
+
+let bgSwitchTimer = null;
+window.addEventListener('scroll', () => {
+  clearTimeout(bgSwitchTimer);
+  bgSwitchTimer = setTimeout(() => {
+    const scrollY = window.scrollY + window.innerHeight * 0.4;
+    let activeBgId = 'bg01';
+
+    for (const sec of sections) {
+      const top = sec.offsetTop;
+      const bottom = sec.offsetTop + sec.offsetHeight;
+
+      if (scrollY >= top && scrollY <= bottom) {
+        activeBgId = sec.dataset.bg;
+        if (sec.dataset.switchNext) {
+          activeBgId = sec.dataset.switchNext;
+        }
+        break;
+      }
+    }
+
+    bgItems.forEach(bg => {
+      bg.classList.toggle('active', bg.dataset.id === activeBgId);
+    });
+  }, 250);
+});
+
+// 全部图表放到window.onload，等DOM全部渲染完毕再初始化，防止容器找不到报错
+window.onload = function(){
+// 3D倾斜轮播逻辑
+const carousel = document.getElementById('carousel');
+const track = document.getElementById('track');
+const items = track.querySelectorAll('.carousel-item');
+const dotWrap = document.getElementById('dotWrap');
+const total = items.length;
+let currentIndex = 0;
+let autoTimer;
+let startX = 0;
+let moveX = 0;
+let isDrag = false;
+// 生成圆点
+for(let i=0;i<total;i++){
+  const d = document.createElement('div');
+  d.className = 'carousel-dot' + (i===0 ? ' active' : '');
+  d.dataset.id = i;
+  d.onclick = ()=>goTo(i);
+  dotWrap.appendChild(d);
+}
+const dots = dotWrap.querySelectorAll('.carousel-dot');
+function updateCarousel(){
+  const itemW = items[0].offsetWidth;
+  const offset = -itemW * currentIndex;
+  track.style.transform = `translateX(${offset}px)`;
+  // 倾斜逻辑：中间摆正，左右倾斜
+  items.forEach((el,idx)=>{
+    const diff = idx - currentIndex;
+    const rotate = diff * -18;
+    const opacity = Math.max(0.45, 1 - Math.abs(diff)*0.35);
+    el.style.transform = `perspective(900px) rotateY(${rotate}deg)`;
+    el.style.opacity = opacity;
+  })
+  dots.forEach((d,i)=>d.classList.toggle('active',i===currentIndex));
+}
+function goTo(i){
+  currentIndex = i;
+  if(currentIndex<0) currentIndex=total-1;
+  if(currentIndex>=total) currentIndex=0;
+  updateCarousel();
+  resetAuto();
+}
+// 自动轮播3秒
+function startAuto(){
+  autoTimer = setInterval(()=>{
+    goTo(currentIndex+1);
+  },3000);
+}
+function resetAuto(){
+  clearInterval(autoTimer);
+  startAuto();
+}
+// 触摸/鼠标拖拽
+track.addEventListener('mousedown',(e)=>{
+  isDrag=true;
+  startX=e.clientX;
+  clearInterval(autoTimer);
+})
+track.addEventListener('touchstart',(e)=>{
+  isDrag=true;
+  startX=e.touches[0].clientX;
+  clearInterval(autoTimer);
+})
+window.addEventListener('mousemove',(e)=>{
+  if(!isDrag) return;
+  moveX=e.clientX - startX;
+})
+window.addEventListener('touchmove',(e)=>{
+  if(!isDrag) return;
+  moveX=e.touches[0].clientX - startX;
+})
+window.addEventListener('mouseup',()=>{
+  if(!isDrag) return;
+  isDrag=false;
+  if(moveX>60) goTo(currentIndex-1);
+  if(moveX<-60) goTo(currentIndex+1);
+  moveX=0;
+  startAuto();
+})
+window.addEventListener('touchend',()=>{
+  if(!isDrag) return;
+  isDrag=false;
+  if(moveX>60) goTo(currentIndex-1);
+  if(moveX<-60) goTo(currentIndex+1);
+  moveX=0;
+  startAuto();
+})
+updateCarousel();
+startAuto();
+  // ========== 图1：双热力地图 ==========
+  const data2023 = [
+      {name:"北京",value:4295005},
+      {name:"天津",value:272571},
+      {name:"河北",value:1336944},
+      {name:"山西",value:1748358},
+      {name:"内蒙古",value:1087155},
+      {name:"辽宁",value:1907659},
+      {name:"吉林",value:1223977},
+      {name:"黑龙江",value:1043669},
+      {name:"上海",value:6033411},
+      {name:"江苏",value:17155197},
+      {name:"浙江",value:18914930},
+      {name:"安徽",value:4714200},
+      {name:"福建",value:6013921},
+      {name:"江西",value:4020020},
+      {name:"山东",value:2698791},
+      {name:"河南",value:1850941},
+      {name:"湖北",value:17119770},
+      {name:"湖南",value:10210462},
+      {name:"广东",value:10430152},
+      {name:"广西",value:3457671},
+      {name:"海南",value:4595091},
+      {name:"重庆",value:7960584},
+      {name:"四川",value:4407658},
+      {name:"贵州",value:6674654},
+      {name:"云南",value:10949836},
+      {name:"西藏",value:505970},
+      {name:"陕西",value:6310205},
+      {name:"甘肃",value:1517747},
+      {name:"青海",value:1109862},
+      {name:"宁夏",value:586100},
+      {name:"新疆",value:1015104}
+  ];
+
+  const data2024 = [
+      {name:"北京",value:672221+1058488+1986038},
+      {name:"天津",value:24971+93961+87815},
+      {name:"河北",value:190031+402638+662391},
+      {name:"山西",value:210034+469819+609869},
+      {name:"内蒙古",value:17969+268239+703896},
+      {name:"辽宁",value:116738+467839+752367},
+      {name:"吉林",value:230422+285089+428746},
+      {name:"黑龙江",value:733541+269999+476909},
+      {name:"上海",value:775813+1796427+1127113},
+      {name:"江苏",value:2930073+4690444+3610181},
+      {name:"浙江",value:3256477+5944104+5223133},
+      {name:"安徽",value:693273+1704775+1106938},
+      {name:"福建",value:924427+1538989+1424363},
+      {name:"江西",value:616004+1203731+768003},
+      {name:"山东",value:357492+745265+1027466},
+      {name:"河南",value:329595+595667+613916},
+      {name:"湖北",value:3773983+5145503+5493365},
+      {name:"湖南",value:1657374+3724655+3671340},
+      {name:"广东",value:2934990+3089230+2639588},
+      {name:"广西",value:641745+1108460+956230},
+      {name:"海南",value:1414636+588923+555466},
+      {name:"重庆",value:1266388+2758304+2456571},
+      {name:"四川",value:495045+905928+1461992},
+      {name:"贵州",value:346602+1113601+1381860},
+      {name:"云南",value:2371132+2297016+2924962},
+      {name:"西藏",value:78790+171585+169058},
+      {name:"陕西",value:1242732+2017033+2817646},
+      {name:"甘肃",value:76186+476064+830962},
+      {name:"青海",value:70990+302981+697127},
+      {name:"宁夏",value:27703+199718+222025},
+      {name:"新疆",value:37758+447709+669276}
+  ];
+
+  function getMapOption(titleText,seriesData){
+      return {
+          title:{
+              text:titleText,
+              left:"center",
+              textStyle:{color:"#222"}
+          },
+          tooltip:{
+              trigger:"item",
+              backgroundColor:"rgba(255,255,255,0.95)",
+              borderColor:"#c0392b",
+              borderWidth:1,
+              textStyle:{color:"#222"},
+              formatter:function(params){
+                  return `<div>${params.name}</div>接待人次：${params.value?.toLocaleString() || "无数据"}`;
+              }
+          },
+          visualMap:{
+              min:0,
+              max:20000000,
+              left:"left",
+              bottom:"5%",
+              text:["高","低"],
+              textStyle:{color:"#222"},
+              calculable:true,
+              inRange:{
+                  color:["#e0edf7","#93b8d8","#4a88bc","#285b8c","#143557"]
+              }
+          },
+          geo:{
+              map:"china",
+              roam:true,
+              zoom:1.1,
+              label:{
+                  show:true,
+                  color:"#c0392b",
+                  fontSize:11
+              },
+              itemStyle:{
+                  areaColor:"#f0f4f8",
+                  borderColor:"#8899aa"
+              },
+              emphasis:{
+                  itemStyle:{areaColor:"#b8d0e8"}
+              }
+          },
+          series:[
+              {
+                  name:"接待人次",
+                  type:"map",
+                  geoIndex:0,
+                  data:seriesData
+              }
+          ]
+      }
+  }
+  const mapLeftDom = document.getElementById('mapLeft');
+  const mapRightDom = document.getElementById('mapRight');
+  const chartMapLeft = echarts.init(mapLeftDom,null,{renderer:"svg"});
+  const chartMapRight = echarts.init(mapRightDom,null,{renderer:"svg"});
+  chartMapLeft.setOption(getMapOption("2023全年接待人次",data2023));
+  chartMapRight.setOption(getMapOption("2024年1-9月接待人次",data2024));
+
+  // ========== 图2：双层环形饼图 ==========
+  const data2023Ring = [
+    {name:"浙江",value:12500000,rank:1},
+    {name:"湖北",value:11800000,rank:2},
+    {name:"江苏",value:10900000,rank:3},
+    {name:"湖南",value:9600000,rank:4},
+    {name:"广东",value:8700000,rank:5},
+    {name:"云南",value:7800000,rank:6},
+    {name:"重庆",value:7200000,rank:7},
+    {name:"陕西",value:6600000,rank:8},
+    {name:"福建",value:5900000,rank:9},
+    {name:"安徽",value:5300000,rank:10},
+    {name:"上海",value:4800000,rank:11},
+    {name:"海南",value:4200000,rank:12},
+    {name:"贵州",value:3900000,rank:13},
+    {name:"江西",value:3500000,rank:14},
+    {name:"山东",value:3100000,rank:15},
+  ]
+  const data2024Ring = [
+    {name:"湖北",value:16132851,rank:1},
+    {name:"浙江",value:14423714,rank:2},
+    {name:"江苏",value:11230698,rank:3},
+    {name:"湖南",value:9053369,rank:4},
+    {name:"云南",value:7593110,rank:5},
+    {name:"陕西",value:6077411,rank:6},
+    {name:"重庆",value:6481263,rank:7},
+    {name:"广东",value:8663808,rank:8},
+    {name:"福建",value:3887379,rank:9},
+    {name:"安徽",value:3504986,rank:10},
+    {name:"上海",value:3700253,rank:11},
+    {name:"贵州",value:2832063,rank:12},
+    {name:"海南",value:2559025,rank:13},
+    {name:"江西",value:2587738,rank:14},
+    {name:"四川",value:2859865,rank:15},
+  ]
+  const getRiseText = (oldRank,newRank)=>{
+    if(newRank < oldRank) return `⬆上升${oldRank-newRank}位`
+    if(newRank > oldRank) return `⬇下降${newRank-oldRank}位`
+    return "➡位次不变"
+  }
+  const colorList = [
+    '#73a8e8','#82b2ec','#90bcf0','#9ec6f3','#acd0f7',
+    '#ffb270','#ffbc82','#ffc794','#ffd1a6','#ffdbb8',
+    '#689cdb','#77a6df','#86b0e4','#95bae8','#a4c4ed'
+  ]
+  const ringOption = {
+    backgroundColor:'transparent',
+    tooltip:{
+      trigger:'item',
+      backgroundColor:'rgba(255,255,255,0.92)',
+      borderColor:'#ddd',
+      borderWidth:1,
+      textStyle:{color:'#222'},
+      formatter:function(params){
+        const d23 = data2023Ring.find(i=>i.name === params.name)
+        const d24 = data2024Ring.find(i=>i.name === params.name)
+        if(!d23 || !d24) return `${params.name}<br/>数值：${params.value.toLocaleString()}`
+        return `<div style="font-weight:bold">${params.name}</div> 2023全年：${d23.value.toLocaleString()}，第${d23.rank}名<br/> 2024前三季度：${d24.value.toLocaleString()}，第${d24.rank}名<br/> ${getRiseText(d23.rank,d24.rank)}`
+      }
+    },
+    series:[
+      {
+        name:"2023全年",
+        type:"pie",
+        radius:['30%','50%'],
+        center:['50%','50%'],
+        itemStyle:{
+          borderRadius:6,
+          color:function(p){return colorList[p.dataIndex]}
+        },
+        label:{
+          show:true,
+          fontSize:11,
+          color:"#222",
+          formatter:'{b}'
+        },
+        data:data2023Ring
+      },
+      {
+        name:"2024前三季度",
+        type:"pie",
+        radius:['52%','72%'],
+        center:['50%','50%'],
+        itemStyle:{
+          borderRadius:6,
+          color:function(p){return colorList[p.dataIndex]}
+        },
+        label:{
+          show:true,
+          fontSize:11,
+          color:"#222",
+          formatter:'{b}'
+        },
+        data:data2024Ring
+      }
+    ]
+  }
+  const ringDom = document.getElementById('ringChart');
+  const chartRing = echarts.init(ringDom,null,{renderer:"svg"});
+  chartRing.setOption(ringOption);
+
+  // ========== 图3：双向发散条形图【完整修复】 ==========
+  const raw = [
+    {name:"北京",org:672221+1058488+1986038,recv:672221+1058488+1986038},
+    {name:"天津",org:24971+93961+87815,recv:24971+93961+87815},
+    {name:"河北",org:190031+402638+662391,recv:190031+402638+662391},
+    {name:"山西",org:210034+469819+609869,recv:210034+469819+609869},
+    {name:"内蒙古",org:17969+268239+703896,recv:17969+268239+703896},
+    {name:"辽宁",org:116738+467839+752367,recv:116738+467839+752367},
+    {name:"吉林",org:230422+285089+428746,recv:230422+285089+428746},
+    {name:"黑龙江",org:733541+269999+476909,recv:733541+269999+476909},
+    {name:"上海",org:775813+1796427+1127113,recv:775813+1796427+1127113},
+    {name:"江苏",org:2930073+4690444+3610181,recv:2930073+4690444+3610181},
+    {name:"浙江",org:3256477+5944104+5223133,recv:3256477+5944104+5223133},
+    {name:"安徽",org:693273+1704775+1106938,recv:693273+1704775+1106938},
+    {name:"福建",org:924427+1538989+1424363,recv:924427+1538989+1424363},
+    {name:"江西",org:616004+1203731+768003,recv:616004+1203731+768003},
+    {name:"山东",org:357492+745265+1027466,recv:357492+745265+1027466},
+    {name:"河南",org:329595+595667+613916,recv:329595+595667+613916},
+    {name:"湖北",org:3773983+5145503+5493365,recv:3773983+5145503+5493365},
+    {name:"湖南",org:1657374+3724655+3671340,recv:1657374+3724655+3671340},
+    {name:"广东",org:2934990+3089230+2639588,recv:2934990+3089230+2639588},
+    {name:"广西",org:641745+1108460+956230,recv:641745+1108460+956230},
+    {name:"海南",org:1414636+588923+555466,recv:1414636+588923+555466},
+    {name:"重庆",org:1266388+2758304+2456571,recv:1266388+2758304+2456571},
+    {name:"四川",org:495045+905928+1461992,recv:495045+905928+1461992},
+    {name:"贵州",org:346602+1113601+1381860,recv:346602+1113601+1381860},
+    {name:"云南",org:2371132+2297016+2924962,recv:2371132+2297016+2924962},
+    {name:"西藏",org:78790+171585+169058,recv:78790+171585+169058},
+    {name:"陕西",org:1242732+2017033+2817646,recv:1242732+2017033+2817646},
+    {name:"甘肃",org:76186+476064+830962,recv:76186+476064+830962},
+    {name:"青海",org:70990+302981+697127,recv:70990+302981+697127},
+    {name:"宁夏",org:27703+199718+222025,recv:27703+199718+222025},
+    {name:"新疆",org:37758+447709+669276,recv:37758+447709+669276}
+  ];
+  raw.sort((a,b)=>(b.org+b.recv)-(a.org+a.recv));
+  const names = raw.map(d=>d.name);
+  const orgMinus = raw.map(d=>-d.org);
+  const recvPos = raw.map(d=>d.recv);
+
+  const barOption = {
+    backgroundColor: "transparent",
+    tooltip: {
+      trigger: "axis",
+      backgroundColor: "rgba(255,255,255,0.95)",
+      borderColor: "#c9d3e3",
+      borderWidth: 1,
+      textStyle: { color: "#1f2a44" },
+      formatter: function (params) {
+        const idx = params[0].dataIndex;
+        const item = raw[idx];
+        return `<div style="font-weight:600;margin-bottom:4px;color:#1f2a44;">${item.name}</div> 组织人次：${item.org.toLocaleString()}<br/> 接待人次：${item.recv.toLocaleString()}`;
+      }
+    },
+    legend: {
+      data: ["组织人次", "接待人次"],
+      top: 6,
+      textStyle: { color: "#1f2a44", fontSize: 12 },
+      itemWidth: 14,
+      itemHeight: 10
+    },
+    grid: {
+      left: "12%",
+      right: "12%",
+      top: "12%",
+      bottom: "4%",
+      containLabel: true
+    },
+    xAxis: {
+      type: "value",
+      name: "人次数",
+      nameTextStyle: { color: "#5c6b85" },
+      axisLabel: {
+        color: "#5c6b85",
+        fontSize: 11,
+        formatter: function (v) {
+          return Math.abs(v) / 10000 + "万";
+        }
+      },
+      splitLine: {
+        lineStyle: {
+          color: "rgba(160,180,210,0.22)",
+          type: "dashed"
+        }
+      },
+      axisLine: {
+        lineStyle: { color: "#9eb0cc" }
+      },
+      axisTick: { show: false }
+    },
+    yAxis: {
+      type: "category",
+      data: names,
+      axisLabel: { color: "#1f2a44", fontSize: 11 },
+      axisLine: { show: false },
+      axisTick: { show: false }
+    },
+    series: [
+      {
+        name: "组织人次",
+        type: "bar",
+        data: orgMinus,
+        barWidth:12,
+        itemStyle:{
+          color:"#a7c7e7",
+          borderRadius:[6,0,0,6]
+        }
+      },
+      {
+        name: "接待人次",
+        type: "bar",
+        data: recvPos,
+        barWidth:12,
+        itemStyle:{
+          color:"#5f8fd1",
+          borderRadius:[0,6,6,0]
+        }
+      }
+    ]
+  };
+  const barDom = document.getElementById('barChart');
+  const chartBar = echarts.init(barDom,null,{renderer:"svg"});
+  chartBar.setOption(barOption);
+
+
+  // =========【新增：悬浮显示图片的省级地图｜已更新清新蓝绿色系】=========
+  // 省份 —— 你的本地jpg文件名映射
+  const photoMapping = {
+    "北京":"beijing.jpg",
+    "天津":"tianjin.jpg",
+    "河北":"hebei.jpg",
+    "山西":"shanxi.jpg",
+    "内蒙古":"neimenggu.jpg",
+    "辽宁":"liaoning.jpg",
+    "吉林":"jilin.jpg",
+    "黑龙江":"heilongjiang.jpg",
+    "上海":"shanghai.jpg",
+    "江苏":"jiangsu.jpg",
+    "浙江":"zhejiang.jpg",
+    "安徽":"anhui.jpg",
+    "福建":"fujian.jpg",
+    "江西":"jiangxi.jpg",
+    "山东":"shandong.jpg",
+    "河南":"henan.jpg",
+    "湖北":"hubei.jpg",
+    "湖南":"hunan.jpg",
+    "广东":"guangdong.jpg",
+    "广西":"guangxi.jpg",
+    "海南":"hainan.jpg",
+    "重庆":"chongqing.jpg",
+    "四川":"sichuan.jpg",
+    "贵州":"guizhou.jpg",
+    "云南":"yunnan.jpg",
+    "西藏":"xizang.jpg",
+    "陕西":"shaanxi.jpg",
+    "甘肃":"gansu.jpg",
+    "青海":"qinghai.jpg",
+    "宁夏":"ningxia.jpg",
+    "新疆":"xinjiang.jpg"
+  };
+
+  const mapPhotoDom = document.getElementById('mapPhotoChart');
+  const chartPhotoMap = echarts.init(mapPhotoDom,null,{renderer:"svg"});
+
+  const photoMapOption = {
+    backgroundColor:"transparent",
+    tooltip:{
+      trigger:"item",
+      backgroundColor:"rgba(255,255,255,0.96)",
+      borderColor:"#bbbbbb",
+      borderWidth:1,
+      textStyle:{color:"#222"},
+      formatter:function(params){
+        const pName = params.name;
+        const val = params.value;
+        const imgFile = photoMapping[pName];
+        let html = `<div style="font-weight:bold;margin-bottom:4px;">${pName}</div>`;
+        html += `2024前三季度接待人次：${(val||0).toLocaleString()}`;
+        if(imgFile){
+          html += `<br><img class="tooltip-img" src="./images/province/${imgFile}" alt="${pName}风光" onerror="this.style.display='none'">`;
+        }
+        return html;
+      }
+    },
+    visualMap:{
+      min:0,
+      max:20000000,
+      left:"left",
+      bottom:"5%",
+      text:["高","低"],
+      textStyle:{color:"#222"},
+      calculable:true,
+      inRange:{
+        color:["#e6f7ee","#b9e8d1","#7ed2b4","#34b79a","#117a65"]
+      }
+    },
+    geo:{
+      map:"china",
+      roam:true,
+      zoom:1.05,
+      label:{
+        show:true,
+        color:"#2f4f44",
+        fontSize:10
+      },
+      itemStyle:{
+        areaColor:"#f4fbf7",
+        borderColor:"#9cb8ac"
+      },
+      emphasis:{
+        itemStyle:{areaColor:"#b9e8d1"}
+      }
+    },
+    series:[
+      {
+        name:"接待人次",
+        type:"map",
+        geoIndex:0,
+        data:data2024
+      }
+    ]
+  }
+  chartPhotoMap.setOption(photoMapOption);
+
+
+  // 窗口resize，四张图表同时自适应
+  window.addEventListener('resize',function(){
+    chartMapLeft.resize();
+    chartMapRight.resize();
+    chartRing.resize();
+    chartBar.resize();
+    chartPhotoMap.resize();
+  })
+}
+</script>
+</body>
+</html>
